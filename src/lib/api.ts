@@ -7,7 +7,7 @@ export type ApiResponse<T> = { ok: true; data: T } | { ok: false; error: string;
 
 export async function gameApi<T>(payload: Record<string, unknown>): Promise<T> {
   if (!url || !publishable) throw new Error("Game backend is not configured yet.");
-  const response = await fetch(`${url}/functions/v1/game-api`, {
+  const response = await fetch(`${url}/functions/v1/most_likely-game-api`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
