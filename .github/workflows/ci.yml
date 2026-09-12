@@ -17,12 +17,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Pin npm
+        run: npm install --global npm@11.6.2
       - name: Install dependencies
         run: |
           if [ -f package-lock.json ]; then
             npm ci
           else
-            npm install
+            npm install --package-lock-only --ignore-scripts
+            npm ci
           fi
       - name: Commit lockfile on main after first successful install
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && hashFiles('package-lock.json') != '' }}
@@ -43,3 +46,7 @@ jobs:
         run: npm run typecheck
       - name: Production build
         run: npm run build
+      - name: Live multiplayer backend smoke test
+        env:
+          BACKEND_SMOKE_URL: https://nowlwprtcnieihelqjoa.supabase.co/functions/v1/most_likely-game-api
+        run: node scripts/smoke-backend.mjs
