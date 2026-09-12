@@ -9,7 +9,7 @@ A production-ready, mobile-first realtime party game for 3–10 friends sitting 
 1. One person creates a room and becomes Host.
 2. Friends join in seconds using a 4-digit code or QR link — no accounts.
 3. Every phone receives the same “Who would…?” question.
-4. Everyone secretly locks one vote for another player.
+4. Everyone secretly locks one vote for any player in the room — including themselves when they think the answer is them.
 5. The Host reveals after voting is complete, or explicitly reveals early.
 6. Every device enters the synchronized reveal and then sees the vote distribution.
 7. When the group ends the game, category awards, session awards and data-backed receipts are generated from the real session.
@@ -112,7 +112,7 @@ The Edge Function uses the platform-provided server-side Postgres connection and
 
 - 3–10 players
 - no accounts or passwords
-- no self-votes by default
+- self-votes are allowed
 - one vote per player per round, database-enforced
 - no joining after a game starts
 - Host cannot inspect vote targets before reveal
@@ -144,7 +144,7 @@ The Edge Function uses the platform-provided server-side Postgres connection and
 - [x] CI green on tests, strict TypeScript and production build
 - [x] Project Hub migration applied
 - [x] `most_likely-game-api` deployed and multiplayer smoke-tested
-- [ ] Vercel production deployment verified
+- [x] Vercel production deployment verified
 
 ## Safety rule
 
