@@ -46,7 +46,7 @@ export function selectQuestion(args: {
     awardCategory: q.tone === "wholesome" ? "loyalty" : q.tone === "chaos" || q.tone === "savage" ? "chaos" : "humour",
     tone: q.tone === "funny" ? "funny" : q.tone,
     minPlayers: 3,
-    allowSelf: false,
+    allowSelf: true,
     weight: 1.25,
     topic: `custom:${q.id}`,
     enabled: true
