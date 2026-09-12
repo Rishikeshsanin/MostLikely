@@ -10,7 +10,7 @@ export type { AwardCategory, Pack, Question } from "./question-types.ts";
 function build(prefix: string, pack: Question["pack"], tone: Question["tone"], rows: RawQuestionRow[]): Question[] {
   return rows.map(([text, awardCategory, topic], i) => ({
     id: `${prefix}_${String(i + 1).padStart(3, "0")}`,
-    text, pack, awardCategory, tone, minPlayers: 3, allowSelf: false, weight: 1, topic, enabled: true
+    text, pack, awardCategory, tone, minPlayers: 3, allowSelf: true, weight: 1, topic, enabled: true
   }));
 }
 
