@@ -1,6 +1,15 @@
-create extension if not exists pgcrypto;
+-- MostLikely / Project Hub onboarding migration.
+-- This migration is intentionally scoped to the registered app schema only.
+select hub.assert_app_scope('most_likely', 'most_likely');
 
-create table if not exists public.rooms (
+create schema if not exists most_likely;
+comment on schema most_likely is 'Project Hub App #10: MostLikely realtime party game.';
+
+-- Keep the app schema private from browser/Data API roles. Gameplay is mediated
+-- by the app-prefixed Edge Function, which connects to Postgres server-side.
+revoke all on schema most_likely from public, anon, authenticated;
+
+create table most_likely.rooms (
   id uuid primary key default gen_random_uuid(),
   code text not null unique check (code ~ '^[0-9]{4}$'),
   host_player_id uuid,
@@ -17,9 +26,9 @@ create table if not exists public.rooms (
   expires_at timestamptz not null default (now() + interval '6 hours')
 );
 
-create table if not exists public.players (
+create table most_likely.players (
   id uuid primary key default gen_random_uuid(),
-  room_id uuid not null references public.rooms(id) on delete cascade,
+  room_id uuid not null references most_likely.rooms(id) on delete cascade,
   name text not null check (char_length(name) between 2 and 24),
   name_key text not null,
   color text not null,
@@ -32,12 +41,13 @@ create table if not exists public.players (
   created_at timestamptz not null default now()
 );
 
-alter table public.rooms
-  add constraint rooms_host_player_fk foreign key (host_player_id) references public.players(id) on delete set null;
+alter table most_likely.rooms
+  add constraint rooms_host_player_fk
+  foreign key (host_player_id) references most_likely.players(id) on delete set null;
 
-create table if not exists public.rounds (
+create table most_likely.rounds (
   id uuid primary key default gen_random_uuid(),
-  room_id uuid not null references public.rooms(id) on delete cascade,
+  room_id uuid not null references most_likely.rooms(id) on delete cascade,
   question_id text not null,
   question_text text not null,
   question_pack text not null,
@@ -54,51 +64,58 @@ create table if not exists public.rounds (
   unique (room_id, round_number)
 );
 
-alter table public.rooms
-  add constraint rooms_current_round_fk foreign key (current_round_id) references public.rounds(id) on delete set null;
+alter table most_likely.rooms
+  add constraint rooms_current_round_fk
+  foreign key (current_round_id) references most_likely.rounds(id) on delete set null;
 
-create table if not exists public.votes (
+create table most_likely.votes (
   id uuid primary key default gen_random_uuid(),
-  round_id uuid not null references public.rounds(id) on delete cascade,
-  voter_id uuid not null references public.players(id) on delete cascade,
-  target_player_id uuid not null references public.players(id) on delete cascade,
+  round_id uuid not null references most_likely.rounds(id) on delete cascade,
+  voter_id uuid not null references most_likely.players(id) on delete cascade,
+  target_player_id uuid not null references most_likely.players(id) on delete cascade,
   created_at timestamptz not null default now(),
   unique (round_id, voter_id)
 );
 
-create index if not exists idx_players_room on public.players(room_id);
-create unique index if not exists idx_players_active_name_unique on public.players(room_id, name_key) where kicked = false;
-create unique index if not exists idx_players_active_slot_unique on public.players(room_id, join_order) where kicked = false;
-create index if not exists idx_players_room_seen on public.players(room_id, last_seen_at desc);
-create index if not exists idx_rounds_room on public.rounds(room_id, round_number desc);
-create index if not exists idx_votes_round on public.votes(round_id);
-create index if not exists idx_rooms_expiry on public.rooms(expires_at);
+create index idx_most_likely_players_room on most_likely.players(room_id);
+create unique index idx_most_likely_players_active_name_unique
+  on most_likely.players(room_id, name_key) where kicked = false;
+create unique index idx_most_likely_players_active_slot_unique
+  on most_likely.players(room_id, join_order) where kicked = false;
+create index idx_most_likely_players_room_seen on most_likely.players(room_id, last_seen_at desc);
+create index idx_most_likely_rounds_room on most_likely.rounds(room_id, round_number desc);
+create index idx_most_likely_votes_round on most_likely.votes(round_id);
+create index idx_most_likely_rooms_expiry on most_likely.rooms(expires_at);
 
-alter table public.rooms enable row level security;
-alter table public.players enable row level security;
-alter table public.rounds enable row level security;
-alter table public.votes enable row level security;
+alter table most_likely.rooms enable row level security;
+alter table most_likely.players enable row level security;
+alter table most_likely.rounds enable row level security;
+alter table most_likely.votes enable row level security;
 
--- Deliberately no anon/authenticated table policies: browsers never query game tables directly.
--- All database access goes through the isolated game-api Edge Function using privileged server credentials.
-revoke all on table public.rooms, public.players, public.rounds, public.votes from anon, authenticated;
-grant all on table public.rooms, public.players, public.rounds, public.votes to service_role;
+-- No browser policies by design. Raw game rows, especially secret votes, are
+-- not directly queryable by anon/authenticated clients.
+revoke all on all tables in schema most_likely from public, anon, authenticated;
+revoke all on all sequences in schema most_likely from public, anon, authenticated;
+alter default privileges in schema most_likely revoke all on tables from public, anon, authenticated;
+alter default privileges in schema most_likely revoke all on sequences from public, anon, authenticated;
 
-create or replace function public.expire_mostlikely_rooms()
+create or replace function most_likely.expire_rooms()
 returns integer
 language plpgsql
 security invoker
-set search_path = public
+set search_path = pg_catalog, most_likely
 as $$
-declare deleted_count integer;
+declare
+  deleted_count integer;
 begin
-  delete from public.rooms where expires_at < now();
+  delete from most_likely.rooms where expires_at < now();
   get diagnostics deleted_count = row_count;
   return deleted_count;
 end;
 $$;
-revoke all on function public.expire_mostlikely_rooms() from public, anon, authenticated;
-grant execute on function public.expire_mostlikely_rooms() to service_role;
 
-comment on table public.votes is 'Secret votes. Never expose this table to browser roles or Realtime subscriptions.';
-comment on table public.rooms is 'Temporary MostLikely party rooms. Edge Function extends expires_at on activity.';
+revoke all on function most_likely.expire_rooms() from public, anon, authenticated;
+
+comment on table most_likely.votes is 'Secret MostLikely votes. Never expose raw rows to browser clients or Realtime subscriptions.';
+comment on table most_likely.rooms is 'Temporary MostLikely party rooms. Activity extends expires_at; inactive rooms are disposable.';
+comment on function most_likely.expire_rooms() is 'Deletes only expired rows from the MostLikely app schema.';
