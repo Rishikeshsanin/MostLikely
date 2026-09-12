@@ -17,7 +17,7 @@ function getClient() {
 export function subscribeToRoom(code: string, onChange: () => void): () => void {
   const supabase = getClient();
   if (!supabase) return () => undefined;
-  let channel: RealtimeChannel | null = supabase.channel(`room:${code.toUpperCase()}`, {
+  let channel: RealtimeChannel | null = supabase.channel(`most_likely:room:${code.toUpperCase()}`, {
     config: { private: false, broadcast: { self: false } }
   });
   channel.on("broadcast", { event: "state_changed" }, () => onChange()).subscribe();
