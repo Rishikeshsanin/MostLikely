@@ -141,9 +141,9 @@ The Edge Function uses the platform-provided server-side Postgres connection and
 - [x] Responsive mobile-first UI
 - [x] PWA manifest/service worker
 - [x] Project Hub isolation contract
-- [ ] CI green on tests, strict TypeScript and production build
-- [ ] Project Hub migration applied
-- [ ] `most_likely-game-api` deployed and multiplayer smoke-tested
+- [x] CI green on tests, strict TypeScript and production build
+- [x] Project Hub migration applied
+- [x] `most_likely-game-api` deployed and multiplayer smoke-tested
 - [ ] Vercel production deployment verified
 
 ## Safety rule
