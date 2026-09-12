@@ -1,17 +1,14 @@
 import type { Pack, RoomState } from "./types";
-
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const publishable = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./supabase-public";
 
 export type ApiResponse<T> = { ok: true; data: T } | { ok: false; error: string; code?: string; details?: unknown };
 
 export async function gameApi<T>(payload: Record<string, unknown>): Promise<T> {
-  if (!url || !publishable) throw new Error("Game backend is not configured yet.");
-  const response = await fetch(`${url}/functions/v1/most_likely-game-api`, {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/most_likely-game-api`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      apikey: publishable,
+      apikey: SUPABASE_PUBLISHABLE_KEY,
       "x-client-info": "mostlikely-web"
     },
     cache: "no-store",
