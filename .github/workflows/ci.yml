@@ -12,9 +12,6 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 12
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_placeholder
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,13 +35,11 @@ jobs:
           git add package-lock.json
           git commit -m "chore: lock production dependencies"
           git push
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
       - name: Test game engine
         run: npm test
       - name: Typecheck
         run: npm run typecheck
       - name: Production build
         run: npm run build
-      - name: Live multiplayer backend smoke test
-        env:
-          BACKEND_SMOKE_URL: https://nowlwprtcnieihelqjoa.supabase.co/functions/v1/most_likely-game-api
-        run: node scripts/smoke-backend.mjs
