@@ -29,12 +29,21 @@ export function JoinDeepLink({ code }: { code: string }) {
 
   return (
     <main className="shell center-page">
-      <form className="card card-pad stack-lg" onSubmit={submit}>
-        <div className="row"><div className="brand-mark">W?</div><div><div className="eyebrow">You&apos;re invited</div><div className="muted small">WHO WOULD?</div></div></div>
-        <div><div className="muted small">ROOM</div><div style={{ fontSize: "2.8rem", fontWeight: 950, letterSpacing: ".14em" }}>{cleanCode || "—"}</div></div>
+      <form className="state-page card card-pad stack-lg form-card" onSubmit={submit}>
+        <div className="row-between">
+          <div className="row"><div className="brand-mark brand-mark-lg">W?</div><div><div className="eyebrow">You&apos;re invited</div><div className="muted small">WHO WOULD?</div></div></div>
+          <div className="live-badge"><span className="dot dot-live" /> LIVE</div>
+        </div>
+
+        <div className="stack" style={{ gap: 7 }}>
+          <div className="muted small">ROOM CODE</div>
+          <div style={{ fontSize: "clamp(2.7rem, 13vw, 4rem)", fontWeight: 950, letterSpacing: ".14em", lineHeight: 1 }}>{cleanCode || "—"}</div>
+          <div className="muted small">No account needed · votes stay secret until reveal</div>
+        </div>
+
         <div className="field"><label htmlFor="name">Your name</label><input id="name" className="input" autoFocus maxLength={24} autoComplete="nickname" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} /></div>
         {error && <div className="error" role="alert">{error}</div>}
-        <button className="btn btn-primary btn-full" disabled={busy || cleanCode.length !== 4 || name.trim().length < 2}>{busy ? "Joining…" : "Join the room"}</button>
+        <button className="btn btn-primary btn-full" disabled={busy || cleanCode.length !== 4 || name.trim().length < 2}>{busy ? "Joining room…" : "Join the room"}</button>
         <button className="btn btn-ghost btn-full" type="button" onClick={() => router.push("/")}>Back home</button>
       </form>
     </main>
